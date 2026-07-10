@@ -1,0 +1,7 @@
+spring:
+  kafka:
+    bootstrap-servers: ${FLOWFORGE_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${FLOWFORGE_VALKEY_HOST:localhost}
+      port: ${FLOWFORGE_VALKEY_PORT:6379}

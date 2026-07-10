@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${FLOWFORGE_DB_URL:jdbc:postgresql://localhost:5432/flowforge}
+    username: ${FLOWFORGE_DB_USERNAME:postgres}
+    password: ${FLOWFORGE_DB_PASSWORD:local_dev_password_change_me}
+  kafka:
+    bootstrap-servers: ${FLOWFORGE_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  data:
+    redis:
+      host: ${FLOWFORGE_VALKEY_HOST:localhost}
+      port: ${FLOWFORGE_VALKEY_PORT:6379}

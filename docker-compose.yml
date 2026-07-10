@@ -1,0 +1,63 @@
+version: '3.8'
+
+# FlowForge Local Development Infrastructure Stack
+#
+# Ephemeral State Store: Valkey
+# Valkey is configured to support ephemeral operational state such as rate limiting, 
+# fast counters, worker liveness projections, and temporary coordination state. 
+# It is NOT the durable correctness authority or a general distributed lock coordinator.
+# Durable execution correctness remains based on PostgreSQL conditional state mutation, 
+# execution leases, and fencing tokens.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: flowforge-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: flowforge
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: local_dev_password_change_me
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d flowforge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  valkey:
+    image: valkey/valkey:7.2-alpine
+    container_name: flowforge-valkey
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redpanda:
+    image: docker.io/redpandadata/redpanda:v24.1.2
+    container_name: flowforge-redpanda
+    command:
+      - redpanda start
+      - --smp 1
+      - --overprovisioned
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
+    ports:
+      - "9092:9092"
+      - "8082:8082"
+    healthcheck:
+      test: ["CMD", "rpk", "cluster", "info"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  postgres-data:
+    driver: local
