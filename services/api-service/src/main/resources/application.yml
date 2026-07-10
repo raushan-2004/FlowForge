@@ -1,6 +1,12 @@
 spring:
   application:
     name: api-service
+
+flowforge:
+  security:
+    jwt:
+      secret: ${FLOWFORGE_JWT_SECRET:local_development_jwt_signing_key_at_least_32_bytes_long}
+      expiration-ms: 3600000
   datasource:
     driver-class-name: org.postgresql.Driver
   jpa:

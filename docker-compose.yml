@@ -1,4 +1,3 @@
-version: '3.8'
 
 # FlowForge Local Development Infrastructure Stack
 #
@@ -48,10 +47,10 @@ services:
       - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
       - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
       - --pandaproxy-addr 0.0.0.0:8082
-      - --advertise-pandaproxy-addr localhost:8082
+      - --advertise-pandaproxy-addr localhost:18082
     ports:
       - "9092:9092"
-      - "8082:8082"
+      - "18082:8082"
     healthcheck:
       test: ["CMD", "rpk", "cluster", "info"]
       interval: 5s
