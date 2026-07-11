@@ -36,8 +36,17 @@ public class ApiKey {
     @Column(name = "status", nullable = false)
     private ApiKeyStatus status;
 
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private UUID createdBy;
+
+    @Column(name = "updated_by", nullable = false)
+    private UUID updatedBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private Instant updatedAt;
 
     @Column(name = "expiry_at")
     private Instant expiryAt;
@@ -48,6 +57,14 @@ public class ApiKey {
     protected ApiKey() {}
 
     public ApiKey(UUID publicId, String keyId, String displayPrefix, String secretHash, Project project, Tenant tenant, ApiKeyStatus status, Instant expiryAt) {
+        this(publicId, keyId, displayPrefix, secretHash, project, tenant, status, expiryAt, UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public ApiKey(UUID publicId, String keyId, String displayPrefix, String secretHash, Project project, Tenant tenant, ApiKeyStatus status, Instant expiryAt, UUID createdBy) {
+        this(publicId, keyId, displayPrefix, secretHash, project, tenant, status, expiryAt, createdBy, Instant.now());
+    }
+
+    public ApiKey(UUID publicId, String keyId, String displayPrefix, String secretHash, Project project, Tenant tenant, ApiKeyStatus status, Instant expiryAt, UUID createdBy, Instant createdAt) {
         if (publicId == null) throw new IllegalArgumentException("publicId cannot be null");
         if (keyId == null) throw new IllegalArgumentException("keyId cannot be null");
         if (displayPrefix == null) throw new IllegalArgumentException("displayPrefix cannot be null");
@@ -55,6 +72,8 @@ public class ApiKey {
         if (project == null) throw new IllegalArgumentException("project cannot be null");
         if (tenant == null) throw new IllegalArgumentException("tenant cannot be null");
         if (status == null) throw new IllegalArgumentException("status cannot be null");
+        if (createdBy == null) throw new IllegalArgumentException("createdBy cannot be null");
+        if (createdAt == null) throw new IllegalArgumentException("createdAt cannot be null");
 
         this.publicId = publicId;
         this.keyId = keyId;
@@ -64,7 +83,10 @@ public class ApiKey {
         this.tenant = tenant;
         this.status = status;
         this.expiryAt = expiryAt;
-        this.createdAt = Instant.now();
+        this.createdBy = createdBy;
+        this.updatedBy = createdBy;
+        this.createdAt = createdAt;
+        this.updatedAt = createdAt;
     }
 
     public Long getId() {
@@ -99,8 +121,20 @@ public class ApiKey {
         return status;
     }
 
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
     }
 
     public Instant getExpiryAt() {
@@ -112,11 +146,25 @@ public class ApiKey {
     }
 
     public void revoke() {
+        revoke(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void revoke(UUID updatedBy) {
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.status = ApiKeyStatus.REVOKED;
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
     }
 
     public void expire() {
+        expire(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void expire(UUID updatedBy) {
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.status = ApiKeyStatus.EXPIRED;
+        this.updatedBy = updatedBy;
+        this.updatedAt = Instant.now();
     }
 
     public void recordUsage(Instant usedAt) {

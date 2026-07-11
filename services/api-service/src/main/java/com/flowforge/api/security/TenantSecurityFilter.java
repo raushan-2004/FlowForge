@@ -3,7 +3,9 @@ package com.flowforge.api.security;
 import com.flowforge.api.model.Tenant;
 import com.flowforge.api.model.TenantMembership;
 import com.flowforge.api.model.TenantStatus;
+import com.flowforge.api.model.TenantRole;
 import com.flowforge.api.repository.TenantMembershipRepository;
+import com.flowforge.api.repository.TenantRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,9 +22,13 @@ import java.util.UUID;
 public class TenantSecurityFilter extends OncePerRequestFilter {
 
     private final TenantMembershipRepository membershipRepository;
+    private final TenantRepository tenantRepository;
 
-    public TenantSecurityFilter(TenantMembershipRepository membershipRepository) {
+    public TenantSecurityFilter(
+            TenantMembershipRepository membershipRepository,
+            TenantRepository tenantRepository) {
         this.membershipRepository = membershipRepository;
+        this.tenantRepository = tenantRepository;
     }
 
     @Override
@@ -41,8 +47,64 @@ public class TenantSecurityFilter extends OncePerRequestFilter {
 
         // 2. Establish authentication presence
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !(auth.getPrincipal() instanceof AuthenticatedUserPrincipal)) {
-            // Let the request proceed; Spring Security will throw 401 later since route is secure
+        if (auth == null) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // 2a. Handle API Key authenticated project principal
+        if (auth.getPrincipal() instanceof AuthenticatedProjectPrincipal) {
+            AuthenticatedProjectPrincipal projectPrincipal = (AuthenticatedProjectPrincipal) auth.getPrincipal();
+
+            try {
+                Tenant tenant = tenantRepository.findByPublicId(projectPrincipal.getTenantId()).orElse(null);
+                if (tenant == null) {
+                    SecurityErrorWriter.writeErrorResponse(
+                            response, 
+                            HttpServletResponse.SC_FORBIDDEN, 
+                            "TENANT_NOT_FOUND", 
+                            "The requested tenant was not found"
+                    );
+                    return;
+                }
+
+                if (tenant.getStatus() == TenantStatus.CLOSED) {
+                    SecurityErrorWriter.writeErrorResponse(
+                            response, 
+                            HttpServletResponse.SC_FORBIDDEN, 
+                            "TENANT_NOT_FOUND", 
+                            "The requested tenant has been closed"
+                    );
+                    return;
+                }
+
+                if (tenant.getStatus() == TenantStatus.SUSPENDED) {
+                    SecurityErrorWriter.writeErrorResponse(
+                            response, 
+                            HttpServletResponse.SC_FORBIDDEN, 
+                            "TENANT_NOT_FOUND", 
+                            "The requested tenant is suspended"
+                    );
+                    return;
+                }
+
+                // Establish automation context (identifies project and tenant; no human user or role)
+                TenantSecurityContext context = new TenantSecurityContext(
+                        projectPrincipal.getProjectId(),
+                        projectPrincipal.getTenantId(), 
+                        tenant.getId()
+                );
+                TenantSecurityContextHolder.setContext(context);
+
+                filterChain.doFilter(request, response);
+            } finally {
+                TenantSecurityContextHolder.clear();
+            }
+            return;
+        }
+
+        // 2b. Handle standard human user principal
+        if (!(auth.getPrincipal() instanceof AuthenticatedUserPrincipal)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -133,6 +195,7 @@ public class TenantSecurityFilter extends OncePerRequestFilter {
                 || uri.startsWith("/api/v1/jobs") 
                 || uri.startsWith("/api/v1/executions") 
                 || uri.startsWith("/api/v1/workflows")
-                || uri.startsWith("/api/v1/test-tenant-scoped");
+                || uri.startsWith("/api/v1/test-tenant-scoped")
+                || (uri.startsWith("/api/v1/tenants/") && uri.contains("/members"));
     }
 }

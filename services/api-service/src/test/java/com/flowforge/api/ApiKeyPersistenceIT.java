@@ -75,8 +75,8 @@ class ApiKeyPersistenceIT extends BasePersistenceIT {
 
         // Attempting to insert an API key referencing Project A but setting tenant_id to Tenant B fails on composite FK
         assertThatThrownBy(() -> {
-            entityManager.createNativeQuery("INSERT INTO api_keys (public_id, key_id, display_prefix, secret_hash, project_id, tenant_id, status, created_at) " +
-                            "VALUES (:publicId, 'ff_bad_key', 'ff_prefix', 'hash', :projectId, :tenantId, 'ACTIVE', :createdAt)")
+            entityManager.createNativeQuery("INSERT INTO api_keys (public_id, key_id, display_prefix, secret_hash, project_id, tenant_id, status, created_by, updated_by, created_at, updated_at) " +
+                            "VALUES (:publicId, 'ff_bad_key', 'ff_prefix', 'hash', :projectId, :tenantId, 'ACTIVE', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', :createdAt, :createdAt)")
                     .setParameter("publicId", apiPublicId)
                     .setParameter("projectId", projectA.getId())
                     .setParameter("tenantId", tenantB.getId()) 

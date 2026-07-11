@@ -8,18 +8,53 @@ import org.springframework.stereotype.Service;
 @Service
 public class TenantAuthorizationService {
 
-    public boolean canManageProjects() {
-        TenantSecurityContext context = TenantSecurityContextHolder.getContext();
-        if (context == null) {
+    private TenantSecurityContext getContext() {
+        return TenantSecurityContextHolder.getContext();
+    }
+
+    public boolean canManageMembers() {
+        TenantSecurityContext context = getContext();
+        if (context == null || context.isAutomation()) {
+            return false;
+        }
+        TenantRole role = context.getRole();
+        return role == TenantRole.OWNER || role == TenantRole.ADMIN;
+    }
+
+    public boolean canCreateProjects() {
+        TenantSecurityContext context = getContext();
+        if (context == null || context.isAutomation()) {
             return false;
         }
         TenantRole role = context.getRole();
         return role == TenantRole.OWNER || role == TenantRole.ADMIN || role == TenantRole.DEVELOPER;
     }
 
+    public boolean canUpdateProjects() {
+        TenantSecurityContext context = getContext();
+        if (context == null || context.isAutomation()) {
+            return false;
+        }
+        TenantRole role = context.getRole();
+        return role == TenantRole.OWNER || role == TenantRole.ADMIN || role == TenantRole.DEVELOPER;
+    }
+
+    public boolean canArchiveProjects() {
+        TenantSecurityContext context = getContext();
+        if (context == null || context.isAutomation()) {
+            return false;
+        }
+        TenantRole role = context.getRole();
+        return role == TenantRole.OWNER || role == TenantRole.ADMIN || role == TenantRole.DEVELOPER;
+    }
+
+    public boolean canManageProjects() {
+        return canCreateProjects();
+    }
+
     public boolean canCreateJobs() {
-        TenantSecurityContext context = TenantSecurityContextHolder.getContext();
-        if (context == null) {
+        TenantSecurityContext context = getContext();
+        if (context == null || context.isAutomation()) {
             return false;
         }
         TenantRole role = context.getRole();
@@ -27,14 +62,34 @@ public class TenantAuthorizationService {
     }
 
     public boolean canViewExecutions() {
-        TenantSecurityContext context = TenantSecurityContextHolder.getContext();
+        TenantSecurityContext context = getContext();
         if (context == null) {
             return false;
+        }
+        if (context.isAutomation()) {
+            return true; // Automation API Keys are allowed to view executions (within their project)
         }
         TenantRole role = context.getRole();
         return role == TenantRole.OWNER 
                 || role == TenantRole.ADMIN 
                 || role == TenantRole.DEVELOPER 
                 || role == TenantRole.VIEWER;
+    }
+
+    // --- Extensible Automation-Only Permissions ---
+
+    public boolean canSubmitJobs() {
+        TenantSecurityContext context = getContext();
+        return context != null && context.isAutomation();
+    }
+
+    public boolean canReadExecutions() {
+        TenantSecurityContext context = getContext();
+        return context != null && (context.isAutomation() || canViewExecutions());
+    }
+
+    public boolean canReadProjectMetadata() {
+        TenantSecurityContext context = getContext();
+        return context != null; // Both human users and project keys can read metadata
     }
 }

@@ -33,7 +33,12 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("VALIDATION_FAILED", validationErrors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponse);
     }
-
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(org.springframework.security.access.AccessDeniedException ex) {
+        log.warn("Access denied exception: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("FORBIDDEN", "Access to this resource is denied");
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unhandled exception caught in GlobalExceptionHandler", ex);

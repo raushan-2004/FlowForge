@@ -22,6 +22,12 @@ public class Tenant {
     @Column(name = "status", nullable = false)
     private TenantStatus status;
 
+    @Column(name = "created_by", nullable = false, updatable = false)
+    private UUID createdBy;
+
+    @Column(name = "updated_by", nullable = false)
+    private UUID updatedBy;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -31,13 +37,20 @@ public class Tenant {
     protected Tenant() {}
 
     public Tenant(UUID publicId, String name, TenantStatus status) {
+        this(publicId, name, status, UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public Tenant(UUID publicId, String name, TenantStatus status, UUID createdBy) {
         if (publicId == null) throw new IllegalArgumentException("publicId cannot be null");
         if (name == null) throw new IllegalArgumentException("name cannot be null");
         if (status == null) throw new IllegalArgumentException("status cannot be null");
+        if (createdBy == null) throw new IllegalArgumentException("createdBy cannot be null");
 
         this.publicId = publicId;
         this.name = name;
         this.status = status;
+        this.createdBy = createdBy;
+        this.updatedBy = createdBy;
         this.createdAt = Instant.now();
         this.updatedAt = this.createdAt;
     }
@@ -58,6 +71,14 @@ public class Tenant {
         return status;
     }
 
+    public UUID getCreatedBy() {
+        return createdBy;
+    }
+
+    public UUID getUpdatedBy() {
+        return updatedBy;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -67,23 +88,47 @@ public class Tenant {
     }
 
     public void suspend() {
+        suspend(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void suspend(UUID updatedBy) {
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.status = TenantStatus.SUSPENDED;
+        this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }
 
     public void activate() {
+        activate(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void activate(UUID updatedBy) {
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.status = TenantStatus.ACTIVE;
+        this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }
 
     public void close() {
+        close(UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void close(UUID updatedBy) {
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.status = TenantStatus.CLOSED;
+        this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }
 
     public void changeName(String name) {
+        changeName(name, UUID.fromString("00000000-0000-0000-0000-000000000000"));
+    }
+
+    public void changeName(String name, UUID updatedBy) {
         if (name == null) throw new IllegalArgumentException("name cannot be null");
+        if (updatedBy == null) throw new IllegalArgumentException("updatedBy cannot be null");
         this.name = name;
+        this.updatedBy = updatedBy;
         this.updatedAt = Instant.now();
     }
 

@@ -101,7 +101,7 @@ class ProjectPersistenceIT extends BasePersistenceIT {
 
         // When/Then
         assertThatThrownBy(() -> {
-            entityManager.createNativeQuery("INSERT INTO projects (public_id, tenant_id, name, status, created_at, updated_at) VALUES (:publicId, 999999, 'Bad FK Project', 'ACTIVE', :now, :now)")
+            entityManager.createNativeQuery("INSERT INTO projects (public_id, tenant_id, name, status, created_by, updated_by, created_at, updated_at) VALUES (:publicId, 999999, 'Bad FK Project', 'ACTIVE', '00000000-0000-0000-0000-000000000000', '00000000-0000-0000-0000-000000000000', :now, :now)")
                     .setParameter("publicId", projectPublicId)
                     .setParameter("now", now)
                     .executeUpdate();
