@@ -39,6 +39,12 @@ public class GlobalExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse("FORBIDDEN", "Access to this resource is denied");
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupportedException(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        log.warn("HTTP method not supported: {}", ex.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse("METHOD_NOT_ALLOWED", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED).body(errorResponse);
+    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) {
         log.error("Unhandled exception caught in GlobalExceptionHandler", ex);
