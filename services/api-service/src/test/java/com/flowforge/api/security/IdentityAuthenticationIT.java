@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@SuppressWarnings("null")
 class IdentityAuthenticationIT extends BasePersistenceIT {
 
     @Autowired

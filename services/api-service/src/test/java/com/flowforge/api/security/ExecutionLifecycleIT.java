@@ -2,10 +2,8 @@ package com.flowforge.api.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowforge.api.BasePersistenceIT;
-import com.flowforge.api.dto.ApiKeyRequest;
 import com.flowforge.api.dto.ApiKeyCreateResponse;
 import com.flowforge.api.dto.ExecutionRequest;
-import com.flowforge.api.dto.ExecutionResponse;
 import com.flowforge.api.model.*;
 import com.flowforge.api.repository.*;
 import com.flowforge.api.shared.identity.PublicIdGenerator;
@@ -18,7 +16,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@SuppressWarnings({"null", "unused"})
 class ExecutionLifecycleIT extends BasePersistenceIT {
 
     @Autowired

@@ -23,6 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@SuppressWarnings({"null", "unused"})
 class TenantProjectMembershipIT extends BasePersistenceIT {
 
     @Autowired

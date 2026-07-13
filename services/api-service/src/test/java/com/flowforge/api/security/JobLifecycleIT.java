@@ -3,7 +3,6 @@ package com.flowforge.api.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowforge.api.BasePersistenceIT;
 import com.flowforge.api.dto.JobRequest;
-import com.flowforge.api.dto.JobResponse;
 import com.flowforge.api.model.*;
 import com.flowforge.api.repository.*;
 import com.flowforge.api.shared.identity.PublicIdGenerator;
@@ -12,14 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -28,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@SuppressWarnings({"null", "unused"})
 class JobLifecycleIT extends BasePersistenceIT {
 
     @Autowired

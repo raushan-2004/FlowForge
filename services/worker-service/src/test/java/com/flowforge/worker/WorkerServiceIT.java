@@ -1,7 +1,6 @@
 package com.flowforge.worker;
 
 import com.flowforge.worker.config.WorkerProperties;
-import com.flowforge.worker.metrics.WorkerMetrics;
 import com.flowforge.worker.model.*;
 import com.flowforge.worker.repository.*;
 import com.flowforge.worker.service.*;
@@ -25,7 +24,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
+import org.springframework.test.web.servlet.MockMvc; // wait, let's keep original imports
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.*;
@@ -44,6 +43,7 @@ class WorkerServiceIT {
     private static final Logger logger = LoggerFactory.getLogger(WorkerServiceIT.class);
 
     @Container
+    @SuppressWarnings("resource")
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("flowforge")
             .withUsername("postgres")
@@ -280,7 +280,6 @@ class WorkerServiceIT {
     @Test
     void testLeaseExpirationAndRecovery() throws Exception {
         registrationService.run();
-        UUID workerId1 = registrationService.getWorkerPublicId();
 
         UUID execId = UUID.randomUUID();
         jdbcTemplate.update("INSERT INTO executions (public_id, current_status) VALUES (?, ?)", execId, "QUEUED");
@@ -316,7 +315,6 @@ class WorkerServiceIT {
     @Test
     void testStaleWorkerRenewalRejection() throws Exception {
         registrationService.run();
-        UUID workerId = registrationService.getWorkerPublicId();
 
         UUID execId = UUID.randomUUID();
         jdbcTemplate.update("INSERT INTO executions (public_id, current_status) VALUES (?, ?)", execId, "QUEUED");

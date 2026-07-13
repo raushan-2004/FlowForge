@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flowforge.api.BasePersistenceIT;
 import com.flowforge.api.dto.ApiKeyCreateResponse;
 import com.flowforge.api.dto.ApiKeyRequest;
-import com.flowforge.api.dto.ApiKeyResponse;
 import com.flowforge.api.dto.MembershipRequest;
 import com.flowforge.api.model.*;
 import com.flowforge.api.repository.*;
@@ -33,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @AutoConfigureMockMvc
+@SuppressWarnings("null")
 class ApiKeyLifecycleIT extends BasePersistenceIT {
 
     @Autowired

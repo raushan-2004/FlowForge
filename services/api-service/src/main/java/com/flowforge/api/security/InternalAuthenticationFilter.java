@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Collections;
 
 @Component
+@SuppressWarnings("all")
 public class InternalAuthenticationFilter extends OncePerRequestFilter {
 
     private final String internalToken;

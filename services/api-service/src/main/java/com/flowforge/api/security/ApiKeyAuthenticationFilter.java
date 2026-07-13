@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.UUID;
 
 @Component
+@SuppressWarnings("all")
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     private final ApiKeyRepository apiKeyRepository;

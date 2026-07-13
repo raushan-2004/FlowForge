@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 @Component
+@SuppressWarnings("all")
 public class TenantSecurityFilter extends OncePerRequestFilter {
 
     private final TenantMembershipRepository membershipRepository;
