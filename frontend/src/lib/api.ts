@@ -40,8 +40,14 @@ export class ApiClient {
       // 2. Response Interceptors (Error Mapping & JWT refresh placeholder)
       if (!response.ok) {
         if (response.status === 401) {
-          // Token expired or invalid -> trigger silent refresh placeholder
-          console.warn("Silent token refresh placeholder triggered.");
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("flowforge-token");
+            localStorage.removeItem("flowforge-tenant");
+            const currentPath = window.location.pathname + window.location.search;
+            if (!window.location.pathname.startsWith("/login")) {
+              window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+            }
+          }
         }
         
         let errorData: any = {};

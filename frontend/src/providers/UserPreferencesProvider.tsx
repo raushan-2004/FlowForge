@@ -70,7 +70,14 @@ export function UserPreferencesProvider({ children }: { children: React.ReactNod
 export function usePreferences() {
   const context = React.useContext(UserPreferencesContext);
   if (!context) {
-    throw new Error("usePreferences must be used within a UserPreferencesProvider");
+    return {
+      preferences: {
+        sidebarCollapsed: false,
+        refreshInterval: 30,
+      },
+      setSidebarCollapsed: () => {},
+      setRefreshInterval: () => {},
+    };
   }
   return context;
 }

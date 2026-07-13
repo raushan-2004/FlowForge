@@ -17,21 +17,30 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePreferences } from "@/providers/UserPreferencesProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/workflows", label: "Workflows", icon: GitBranch },
-  { href: "/executions", label: "Executions", icon: Activity },
-  { href: "/workers", label: "Workers", icon: Users },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
+  { href: "/projects", label: "Projects", icon: FolderKanban, permission: "VIEW_PROJECTS" },
+  { href: "/workflows", label: "Workflows", icon: GitBranch, permission: "VIEW_PROJECTS" },
+  { href: "/executions", label: "Executions", icon: Activity, permission: "VIEW_PROJECTS" },
+  { href: "/workers", label: "Workers", icon: Users, permission: "MANAGE_USERS" },
+  { href: "/analytics", label: "Analytics", icon: BarChart3, permission: "VIEW_ANALYTICS" },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const { preferences, setSidebarCollapsed } = usePreferences();
+  const { hasPermission } = useAuth();
   const isCollapsed = preferences.sidebarCollapsed;
+
+  const visibleItems = navItems.filter((item) => {
+    if (item.permission) {
+      return hasPermission(item.permission);
+    }
+    return true;
+  });
 
   return (
     <motion.aside
@@ -70,7 +79,7 @@ export function Sidebar() {
 
       {/* Nav List */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
 

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Breadcrumbs } from "./Breadcrumbs";
+import { TenantSwitcher } from "./TenantSwitcher";
 import { NotificationArea } from "./NotificationArea";
 import { UserMenu } from "./UserMenu";
 import { Menu } from "lucide-react";
@@ -24,6 +25,8 @@ export function TopNav() {
           </button>
         )}
         <Breadcrumbs />
+        <span className="text-slate-800 text-sm">|</span>
+        <TenantSwitcher />
       </div>
 
       <div className="flex items-center space-x-4">

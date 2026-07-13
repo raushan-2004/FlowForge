@@ -26,6 +26,9 @@ public interface TenantMembershipRepository extends JpaRepository<TenantMembersh
     @Query("SELECT m FROM TenantMembership m WHERE m.tenant.publicId = :tenantPublicId")
     List<TenantMembership> findAllByTenantPublicId(@Param("tenantPublicId") UUID tenantPublicId);
 
+    @Query("SELECT m FROM TenantMembership m WHERE m.user.publicId = :userPublicId")
+    List<TenantMembership> findAllByUserPublicId(@Param("userPublicId") UUID userPublicId);
+
     @Query("SELECT COUNT(m) FROM TenantMembership m WHERE m.tenant.publicId = :tenantPublicId AND m.role = :role")
     long countByTenantPublicIdAndRole(
             @Param("tenantPublicId") UUID tenantPublicId,
