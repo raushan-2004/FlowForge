@@ -37,6 +37,6 @@ public abstract class BasePersistenceIT {
 
     @BeforeEach
     public void cleanupDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE outbox_events, execution_attempts, executions, jobs, api_keys, tenant_memberships, projects, tenants, users RESTART IDENTITY CASCADE");
+        jdbcTemplate.execute("TRUNCATE TABLE processed_completed_events, node_executions, workflow_runs, workflow_definitions, outbox_events, execution_attempts, executions, jobs, api_keys, tenant_memberships, projects, tenants, users RESTART IDENTITY CASCADE");
     }
 }

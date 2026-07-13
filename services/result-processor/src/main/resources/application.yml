@@ -23,3 +23,11 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+
+flowforge:
+  security:
+    internal-token: default-internal-token-secret-key-12345
+  result:
+    api-service-url: http://localhost:8080
+    topic-execution-completed: execution-completed
+    group-id: result-processor-group

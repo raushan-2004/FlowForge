@@ -18,10 +18,30 @@
     <description>FlowForge Restricted HTTP Job Execution Worker Service</description>
 
     <dependencies>
-        <!-- Spring Boot Starter Web (Actuator endpoints) -->
+        <!-- Spring Boot Starter Web -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring Data JPA -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- PostgreSQL JDBC Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Event Contracts -->
+        <dependency>
+            <groupId>com.flowforge</groupId>
+            <artifactId>event-contracts</artifactId>
+            <version>${project.version}</version>
         </dependency>
 
         <!-- Spring Boot Starter Validation -->

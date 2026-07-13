@@ -13,6 +13,8 @@ import java.util.UUID;
 @Repository
 public interface JobRepository extends JpaRepository<Job, Long> {
 
+    Optional<Job> findByPublicId(UUID publicId);
+
     @Query("SELECT j FROM Job j JOIN FETCH j.project p JOIN FETCH p.tenant t WHERE j.publicId = :jobPublicId AND p.publicId = :projectPublicId AND t.publicId = :tenantPublicId")
     Optional<Job> findByPublicIdAndProjectPublicIdAndTenantPublicId(
             @Param("jobPublicId") UUID jobPublicId,

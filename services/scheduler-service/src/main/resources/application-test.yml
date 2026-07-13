@@ -3,6 +3,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/dummy_test_db
     username: sa
     password:
+    hikari:
+      maximum-pool-size: 50
   jpa:
     hibernate:
       ddl-auto: none
@@ -10,3 +12,10 @@ spring:
     bootstrap-servers: localhost:9092
     listener:
       auto-startup: false
+
+flowforge:
+  scheduler:
+    poll-interval-ms: 1000
+    batch-size: 10
+    enabled: true
+    max-missed-schedules-limit: 5

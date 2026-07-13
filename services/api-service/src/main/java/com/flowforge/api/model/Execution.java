@@ -59,6 +59,9 @@ public class Execution {
     @Column(name = "version", nullable = false)
     private Long version;
 
+    @Column(name = "next_attempt_at")
+    private Instant nextAttemptAt;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -148,6 +151,14 @@ public class Execution {
         return version;
     }
 
+    public Instant getNextAttemptAt() {
+        return nextAttemptAt;
+    }
+
+    public void setNextAttemptAt(Instant nextAttemptAt) {
+        this.nextAttemptAt = nextAttemptAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -174,6 +185,7 @@ public class Execution {
         this.currentStatus = ExecutionStatus.RUNNING;
         this.startedAt = startedAt;
         this.updatedAt = startedAt;
+        this.nextAttemptAt = null;
     }
 
     public void succeed(Instant finishedAt) {
@@ -208,6 +220,16 @@ public class Execution {
             throw new IllegalArgumentException("Next attempt number must be strictly greater than current");
         }
         this.currentAttemptNumber = nextAttemptNumber;
+        this.updatedAt = Instant.now();
+    }
+
+    public void scheduleRetry(Instant nextAttemptAt) {
+        if (this.currentStatus != ExecutionStatus.FAILED) {
+            throw new IllegalStateException("Cannot transition from " + this.currentStatus + " to QUEUED for retry");
+        }
+        this.currentStatus = ExecutionStatus.QUEUED;
+        this.finishedAt = null;
+        this.nextAttemptAt = nextAttemptAt;
         this.updatedAt = Instant.now();
     }
 }

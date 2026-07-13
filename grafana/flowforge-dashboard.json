@@ -1,0 +1,181 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "title": "FlowForge Overview & Workflow Health",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth"
+          },
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 1
+      },
+      "id": 2,
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(flowforge_workflow_runs_active_total[5m]))",
+          "legendFormat": "Active Runs",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Active Workflow Runs",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 1
+      },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "sum(rate(flowforge_workflow_runs_completed_total[5m]))",
+          "legendFormat": "Completed Runs",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(flowforge_workflow_runs_failed_total[5m]))",
+          "legendFormat": "Failed Runs",
+          "refId": "B"
+        }
+      ],
+      "title": "Workflow Run Outcomes",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 1
+      },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(flowforge_workflow_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 Latency",
+          "refId": "A"
+        }
+      ],
+      "title": "Workflow Run p95 Latency",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 5,
+      "title": "Scheduler & Worker Metrics",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 10
+      },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum(rate(flowforge_scheduler_lag_seconds_count[5m]))",
+          "legendFormat": "Scheduler Lag",
+          "refId": "A"
+        }
+      ],
+      "title": "Scheduler Lag & Performance",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "sum(rate(flowforge_worker_claims_success_total[5m]))",
+          "legendFormat": "Success Claims",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(flowforge_worker_claims_failed_total[5m]))",
+          "legendFormat": "Failed Claims",
+          "refId": "B"
+        }
+      ],
+      "title": "Worker Claims Success/Fail Rates",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 36,
+  "style": "dark",
+  "tags": [
+    "flowforge",
+    "production"
+  ],
+  "title": "FlowForge Platform Dashboard",
+  "timezone": "utc",
+  "weekStart": "monday"
+}

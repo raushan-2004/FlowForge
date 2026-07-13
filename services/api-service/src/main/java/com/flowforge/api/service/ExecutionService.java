@@ -16,8 +16,15 @@ import com.flowforge.api.repository.OutboxEventRepository;
 import com.flowforge.api.security.TenantSecurityContext;
 import com.flowforge.api.security.TenantSecurityContextHolder;
 import com.flowforge.api.shared.identity.PublicIdGenerator;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -28,6 +35,8 @@ import java.util.stream.Collectors;
 @Service
 public class ExecutionService {
 
+    private static final Logger logger = LoggerFactory.getLogger(ExecutionService.class);
+
     private final ExecutionRepository executionRepository;
     private final ExecutionAttemptRepository attemptRepository;
     private final OutboxEventRepository outboxEventRepository;
@@ -36,6 +45,12 @@ public class ExecutionService {
     private final PublicIdGenerator publicIdGenerator;
     private final Clock clock;
     private final ObjectMapper objectMapper;
+    private final JdbcTemplate jdbcTemplate;
+
+    private final Counter finalizedCounter;
+    private final Counter failedCounter;
+    private final Counter rollbackCounter;
+    private final Counter leaseReleasedCounter;
 
     public ExecutionService(
             ExecutionRepository executionRepository,
@@ -45,7 +60,9 @@ public class ExecutionService {
             TenantAuthorizationService authorizationService,
             PublicIdGenerator publicIdGenerator,
             Clock clock,
-            ObjectMapper objectMapper) {
+            ObjectMapper objectMapper,
+            JdbcTemplate jdbcTemplate,
+            MeterRegistry meterRegistry) {
         this.executionRepository = executionRepository;
         this.attemptRepository = attemptRepository;
         this.outboxEventRepository = outboxEventRepository;
@@ -54,6 +71,12 @@ public class ExecutionService {
         this.publicIdGenerator = publicIdGenerator;
         this.clock = clock;
         this.objectMapper = objectMapper;
+        this.jdbcTemplate = jdbcTemplate;
+
+        this.finalizedCounter = meterRegistry.counter("flowforge.execution.finalized");
+        this.failedCounter = meterRegistry.counter("flowforge.execution.finalization.failed");
+        this.rollbackCounter = meterRegistry.counter("flowforge.execution.finalization.rollback");
+        this.leaseReleasedCounter = meterRegistry.counter("flowforge.execution.lease.released");
     }
 
     private TenantSecurityContext getActiveTenantContext() {
@@ -184,6 +207,63 @@ public class ExecutionService {
         return mapToResponse(execution);
     }
 
+    @Transactional
+    public Execution triggerExecutionInternal(Job job, ExecutionTriggerType triggerType, String triggerSource, Instant now) {
+        int maxAttempts = job.getRetryMaxAttempts() != null ? job.getRetryMaxAttempts() + 1 : 3;
+
+        Execution execution = new Execution(
+                publicIdGenerator.generate(),
+                job,
+                triggerType,
+                triggerSource,
+                now,
+                maxAttempts
+        );
+
+        ExecutionAttempt firstAttempt = new ExecutionAttempt(
+                publicIdGenerator.generate(),
+                1,
+                AttemptStatus.PENDING,
+                now
+        );
+
+        execution.addAttempt(firstAttempt);
+
+        execution = executionRepository.saveAndFlush(execution);
+        attemptRepository.saveAndFlush(firstAttempt);
+
+        // Emit EXECUTION_CREATED event with payload version 2
+        ExecutionCreatedPayload payloadDto = new ExecutionCreatedPayload(
+                execution.getPublicId(),
+                execution.getJob().getPublicId(),
+                execution.getProject().getPublicId(),
+                execution.getTenant().getPublicId(),
+                execution.getTriggerType().name(),
+                execution.getQueuedAt()
+        );
+
+        String jsonPayload;
+        try {
+            jsonPayload = objectMapper.writeValueAsString(payloadDto);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize execution payload to JSON", e);
+        }
+
+        OutboxEvent outboxEvent = new OutboxEvent(
+                publicIdGenerator.generate(),
+                OutboxAggregateType.EXECUTION,
+                execution.getPublicId(),
+                "EXECUTION_CREATED",
+                jsonPayload,
+                1, // payloadVersion
+                now
+        );
+
+        outboxEventRepository.saveAndFlush(outboxEvent);
+
+        return execution;
+    }
+
     @Transactional(readOnly = true)
     public List<ExecutionResponse> getExecutions(UUID projectId) {
         TenantSecurityContext context = getActiveTenantContext();
@@ -273,7 +353,197 @@ public class ExecutionService {
                 attempt.getWorkerId(),
                 attempt.getDuration(),
                 attempt.getErrorCategory(),
+                attempt.getHttpStatus(),
+                attempt.getResponseSize(),
+                attempt.getBodyTruncated(),
+                attempt.getNetworkError(),
+                attempt.getContentType(),
                 attempt.getCreatedAt()
         );
+    }
+
+    @Transactional
+    public void finalizeExecution(UUID executionPublicId, com.flowforge.api.dto.InternalExecutionFinalizeRequest request) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    if (status == STATUS_COMMITTED) {
+                        finalizedCounter.increment();
+                        leaseReleasedCounter.increment();
+                    } else if (status == STATUS_ROLLED_BACK) {
+                        rollbackCounter.increment();
+                        failedCounter.increment();
+                    }
+                }
+            });
+        }
+
+        // 1. Validate execution ownership
+        Execution execution = executionRepository.findByPublicId(executionPublicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Execution not found"));
+
+        if (execution.getCurrentStatus() != ExecutionStatus.RUNNING) {
+            throw new IllegalStateException("Execution is not in RUNNING state. Current state: " + execution.getCurrentStatus());
+        }
+
+        // 2. Validate lease token in database
+        String leaseToken = request.getLeaseToken();
+        Integer leaseCount = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM execution_leases WHERE execution_public_id = ? AND lease_token = ?",
+                Integer.class,
+                executionPublicId,
+                leaseToken
+        );
+
+        if (leaseCount == null || leaseCount == 0) {
+            throw new InvalidRequestException("Invalid lease token or lease not found for execution: " + executionPublicId);
+        }
+
+        // Determine final statuses
+        ExecutionStatus finalExecutionStatus;
+        AttemptStatus finalAttemptStatus;
+
+        if (request.getNetworkErrorCategory() != null) {
+            finalExecutionStatus = ExecutionStatus.FAILED;
+            finalAttemptStatus = AttemptStatus.FAILED;
+        } else {
+            Integer statusCode = request.getStatusCode();
+            if (statusCode != null && statusCode >= 200 && statusCode < 300) {
+                finalExecutionStatus = ExecutionStatus.SUCCEEDED;
+                finalAttemptStatus = AttemptStatus.SUCCEEDED;
+            } else {
+                finalExecutionStatus = ExecutionStatus.FAILED;
+                finalAttemptStatus = AttemptStatus.FAILED;
+            }
+        }
+
+        Instant finishedAt = request.getFinishedAt();
+
+        // 3. Update Execution
+        if (finalExecutionStatus == ExecutionStatus.SUCCEEDED) {
+            execution.succeed(finishedAt);
+        } else {
+            execution.fail(finishedAt);
+        }
+        executionRepository.saveAndFlush(execution);
+
+        // 4. Update the current ExecutionAttempt
+        int currentAttemptNum = execution.getCurrentAttemptNumber();
+        ExecutionAttempt attempt = attemptRepository.findByExecutionIdAndAttemptNumber(execution.getId(), currentAttemptNum)
+                .orElseThrow(() -> new ResourceNotFoundException("Active attempt not found"));
+
+        if (finalAttemptStatus == AttemptStatus.SUCCEEDED) {
+            attempt.succeed(finishedAt, request.getStatusCode(), request.getResponseSize(), request.getBodyTruncated(), request.getContentType());
+        } else {
+            String errorCategory = request.getNetworkErrorCategory() != null ? "NETWORK_ERROR" : "HTTP_ERROR";
+            attempt.fail(
+                    errorCategory,
+                    request.getNetworkErrorCategory(),
+                    request.getStatusCode(),
+                    request.getResponseSize(),
+                    request.getBodyTruncated(),
+                    request.getContentType(),
+                    finishedAt
+            );
+        }
+        attemptRepository.saveAndFlush(attempt);
+
+        // 5. Release ExecutionLease
+        jdbcTemplate.update(
+                "DELETE FROM execution_leases WHERE execution_public_id = ? AND lease_token = ?",
+                executionPublicId,
+                leaseToken
+        );
+
+        // 6. Create EXECUTION_COMPLETED OutboxEvent (payload version 2)
+        com.flowforge.event.dto.ExecutionCompletedPayload outboxPayload = new com.flowforge.event.dto.ExecutionCompletedPayload(
+                execution.getPublicId(),
+                execution.getTenant().getPublicId(),
+                execution.getProject().getPublicId(),
+                execution.getJob().getPublicId(),
+                finalExecutionStatus.name(),
+                request.getStatusCode(),
+                request.getNetworkErrorCategory(),
+                attempt.getDuration(),
+                finishedAt
+        );
+
+        String jsonPayload;
+        try {
+            jsonPayload = objectMapper.writeValueAsString(outboxPayload);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize execution completed payload to JSON", e);
+        }
+
+        OutboxEvent outboxEvent = new OutboxEvent(
+                publicIdGenerator.generate(),
+                OutboxAggregateType.EXECUTION,
+                execution.getPublicId(),
+                "EXECUTION_COMPLETED",
+                jsonPayload,
+                2, // payloadVersion
+                clock.instant()
+        );
+        outboxEventRepository.saveAndFlush(outboxEvent);
+
+        logger.info("Successfully finalized execution: {}. Status: {}", executionPublicId, finalExecutionStatus);
+    }
+
+    @Transactional
+    public void scheduleRetry(UUID executionPublicId, com.flowforge.api.dto.InternalExecutionRetryRequest request) {
+        // 1. Fetch Execution
+        Execution execution = executionRepository.findByPublicId(executionPublicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Execution not found"));
+
+        if (execution.getCurrentStatus() != ExecutionStatus.FAILED) {
+            throw new IllegalStateException("Execution is not in FAILED state. Current state: " + execution.getCurrentStatus());
+        }
+
+        // 2. Advance execution state
+        execution.scheduleRetry(request.getNextAttemptAt());
+        int nextAttemptNumber = execution.getCurrentAttemptNumber() + 1;
+        execution.incrementAttempt(nextAttemptNumber);
+        executionRepository.saveAndFlush(execution);
+
+        // 3. Create a new ExecutionAttempt in PENDING state
+        ExecutionAttempt nextAttempt = new ExecutionAttempt(
+                publicIdGenerator.generate(),
+                nextAttemptNumber,
+                AttemptStatus.PENDING,
+                clock.instant()
+        );
+        execution.addAttempt(nextAttempt);
+        attemptRepository.saveAndFlush(nextAttempt);
+
+        // 4. Create EXECUTION_RETRY_SCHEDULED OutboxEvent (payload version 1)
+        com.flowforge.event.dto.ExecutionRetryScheduledPayload outboxPayload = new com.flowforge.event.dto.ExecutionRetryScheduledPayload(
+                execution.getPublicId(),
+                nextAttemptNumber,
+                request.getNextAttemptAt(),
+                request.getRetryStrategy(),
+                request.getDelaySeconds()
+        );
+
+        String jsonPayload;
+        try {
+            jsonPayload = objectMapper.writeValueAsString(outboxPayload);
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to serialize execution retry scheduled payload to JSON", e);
+        }
+
+        OutboxEvent outboxEvent = new OutboxEvent(
+                publicIdGenerator.generate(),
+                OutboxAggregateType.EXECUTION,
+                execution.getPublicId(),
+                "EXECUTION_RETRY_SCHEDULED",
+                jsonPayload,
+                1, // payloadVersion
+                clock.instant()
+        );
+        outboxEventRepository.saveAndFlush(outboxEvent);
+
+        logger.info("Successfully scheduled retry for execution: {}, attempt: {}, nextAttemptAt: {}", 
+                executionPublicId, nextAttemptNumber, request.getNextAttemptAt());
     }
 }

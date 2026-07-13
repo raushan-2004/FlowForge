@@ -13,6 +13,7 @@ import java.util.UUID;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
+    Optional<Project> findByPublicId(UUID publicId);
     Optional<Project> findByPublicIdAndTenant(UUID publicId, Tenant tenant);
     Optional<Project> findByTenantAndNameIgnoreCase(Tenant tenant, String name);
 

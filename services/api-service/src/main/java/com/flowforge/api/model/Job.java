@@ -67,6 +67,15 @@ public class Job {
     @Column(name = "status", nullable = false)
     private JobStatus status;
 
+    @Column(name = "next_fire_at")
+    private Instant nextFireAt;
+
+    @Column(name = "last_scheduled_at")
+    private Instant lastScheduledAt;
+
+    @Column(name = "schedule_version", nullable = false)
+    private Long scheduleVersion = 0L;
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
@@ -208,6 +217,30 @@ public class Job {
 
     public Long getVersion() {
         return version;
+    }
+
+    public Instant getNextFireAt() {
+        return nextFireAt;
+    }
+
+    public void setNextFireAt(Instant nextFireAt) {
+        this.nextFireAt = nextFireAt;
+    }
+
+    public Instant getLastScheduledAt() {
+        return lastScheduledAt;
+    }
+
+    public void setLastScheduledAt(Instant lastScheduledAt) {
+        this.lastScheduledAt = lastScheduledAt;
+    }
+
+    public Long getScheduleVersion() {
+        return scheduleVersion;
+    }
+
+    public void setScheduleVersion(Long scheduleVersion) {
+        this.scheduleVersion = scheduleVersion;
     }
 
     public Instant getCreatedAt() {

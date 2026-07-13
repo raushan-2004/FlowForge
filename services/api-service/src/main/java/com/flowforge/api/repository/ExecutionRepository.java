@@ -13,6 +13,8 @@ import java.util.UUID;
 @Repository
 public interface ExecutionRepository extends JpaRepository<Execution, Long> {
 
+    Optional<Execution> findByPublicId(UUID publicId);
+
     @Query("SELECT e FROM Execution e JOIN FETCH e.job j JOIN FETCH e.project p JOIN FETCH e.tenant t WHERE e.publicId = :executionPublicId AND t.publicId = :tenantPublicId")
     Optional<Execution> findByPublicIdAndTenantPublicId(
             @Param("executionPublicId") UUID executionPublicId,

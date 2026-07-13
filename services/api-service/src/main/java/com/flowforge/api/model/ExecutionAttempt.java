@@ -41,6 +41,21 @@ public class ExecutionAttempt {
     @Column(name = "error_category")
     private String errorCategory;
 
+    @Column(name = "http_status")
+    private Integer httpStatus;
+
+    @Column(name = "response_size")
+    private Long responseSize;
+
+    @Column(name = "body_truncated")
+    private Boolean bodyTruncated;
+
+    @Column(name = "network_error")
+    private String networkError;
+
+    @Column(name = "content_type")
+    private String contentType;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -102,6 +117,26 @@ public class ExecutionAttempt {
         return errorCategory;
     }
 
+    public Integer getHttpStatus() {
+        return httpStatus;
+    }
+
+    public Long getResponseSize() {
+        return responseSize;
+    }
+
+    public Boolean getBodyTruncated() {
+        return bodyTruncated;
+    }
+
+    public String getNetworkError() {
+        return networkError;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -113,16 +148,33 @@ public class ExecutionAttempt {
     }
 
     public void succeed(Instant finishedAt) {
+        succeed(finishedAt, null, null, null, null);
+    }
+
+    public void succeed(Instant finishedAt, Integer httpStatus, Long responseSize, Boolean bodyTruncated, String contentType) {
         this.status = AttemptStatus.SUCCEEDED;
         this.finishedAt = finishedAt;
+        this.httpStatus = httpStatus;
+        this.responseSize = responseSize;
+        this.bodyTruncated = bodyTruncated;
+        this.contentType = contentType;
         if (this.startedAt != null) {
             this.duration = java.time.Duration.between(this.startedAt, finishedAt).toMillis();
         }
     }
 
     public void fail(String errorCategory, Instant finishedAt) {
+        fail(errorCategory, null, null, null, null, null, finishedAt);
+    }
+
+    public void fail(String errorCategory, String networkError, Integer httpStatus, Long responseSize, Boolean bodyTruncated, String contentType, Instant finishedAt) {
         this.status = AttemptStatus.FAILED;
         this.errorCategory = errorCategory;
+        this.networkError = networkError;
+        this.httpStatus = httpStatus;
+        this.responseSize = responseSize;
+        this.bodyTruncated = bodyTruncated;
+        this.contentType = contentType;
         this.finishedAt = finishedAt;
         if (this.startedAt != null) {
             this.duration = java.time.Duration.between(this.startedAt, finishedAt).toMillis();

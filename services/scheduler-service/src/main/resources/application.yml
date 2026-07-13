@@ -23,3 +23,10 @@ management:
   endpoint:
     health:
       show-details: when_authorized
+
+flowforge:
+  scheduler:
+    poll-interval-ms: 1000
+    batch-size: 10
+    enabled: true
+    max-missed-schedules-limit: 5

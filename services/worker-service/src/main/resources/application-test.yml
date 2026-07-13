@@ -1,5 +1,24 @@
 spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/dummy_test_db
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 50
+  jpa:
+    hibernate:
+      ddl-auto: none
   kafka:
     bootstrap-servers: localhost:9092
     listener:
       auto-startup: false
+
+flowforge:
+  worker:
+    worker-name: flowforge-worker
+    heartbeat-interval-ms: 1000
+    lease-duration-ms: 3000
+    recovery-interval-ms: 2000
+    enabled: false
+    api-service-url: http://localhost:8080
+    internal-token: default-internal-token-secret-key-12345

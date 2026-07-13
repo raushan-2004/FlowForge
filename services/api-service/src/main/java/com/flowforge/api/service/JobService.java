@@ -113,6 +113,12 @@ public class JobService {
                 clock.instant()
         );
 
+        if (job.getScheduleType() == JobScheduleType.CRON && job.getStatus() == JobStatus.ACTIVE) {
+            java.time.ZonedDateTime nextZdt = org.springframework.scheduling.support.CronExpression.parse(job.getCronExpression())
+                    .next(clock.instant().atZone(java.time.ZoneId.of("UTC")));
+            job.setNextFireAt(nextZdt != null ? nextZdt.toInstant() : null);
+        }
+
         job = jobRepository.save(job);
         return mapToResponse(job);
     }
@@ -225,6 +231,14 @@ public class JobService {
                 getActorPublicId(context),
                 clock.instant()
         );
+
+        if (job.getScheduleType() == JobScheduleType.CRON && job.getStatus() == JobStatus.ACTIVE) {
+            java.time.ZonedDateTime nextZdt = org.springframework.scheduling.support.CronExpression.parse(job.getCronExpression())
+                    .next(clock.instant().atZone(java.time.ZoneId.of("UTC")));
+            job.setNextFireAt(nextZdt != null ? nextZdt.toInstant() : null);
+        } else {
+            job.setNextFireAt(null);
+        }
 
         job = jobRepository.save(job);
         return mapToResponse(job);

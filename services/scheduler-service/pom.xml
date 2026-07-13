@@ -55,6 +55,12 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
+        <!-- Event Contracts -->
+        <dependency>
+            <groupId>com.flowforge</groupId>
+            <artifactId>event-contracts</artifactId>
+        </dependency>
+
         <!-- Test Support (transitive test dependencies) -->
         <dependency>
             <groupId>com.flowforge</groupId>

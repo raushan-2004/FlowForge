@@ -10,3 +10,11 @@ spring:
     bootstrap-servers: localhost:9092
     listener:
       auto-startup: false
+
+flowforge:
+  security:
+    internal-token: default-internal-token-secret-key-12345
+  result:
+    api-service-url: http://localhost:8080
+    topic-execution-completed: execution-completed
+    group-id: result-processor-group

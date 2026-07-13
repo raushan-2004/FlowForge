@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flowforge
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flowforge-config
+  namespace: flowforge
+data:
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres.flowforge.svc.cluster.local:5432/flowforge"
+  SPRING_KAFKA_BOOTSTRAP_SERVERS: "redpanda.flowforge.svc.cluster.local:9092"
+  FLOWFORGE_RESULT_API_SERVICE_URL: "http://api-service.flowforge.svc.cluster.local:8080"
+  FLOWFORGE_WORKER_API_SERVICE_URL: "http://api-service.flowforge.svc.cluster.local:8080"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: flowforge-secrets
+  namespace: flowforge
+type: Opaque
+data:
+  # Base64 encoded values for passwords/keys (dummy placeholders)
+  SPRING_DATASOURCE_PASSWORD: "c3VwZXItc2VjcmV0LWRiLXBhc3N3b3Jk" # super-secret-db-password
+  JWT_SECRET: "c3VwZXItc2VjcmV0LWp3dC1zaWduaW5nLWtleS1leGFtcGxlLXNlY3VyZS0zMjEtYmFzZTY0" # super-secret-jwt-signing-key-example-secure-321-base64
+  INTERNAL_TOKEN: "c3VwZXItc2VjcmV0LWludGVybmFsLXNlcnZpY2UtdG9rZW4tc2VjcmV0LWtleS01NDMyMQ==" # super-secret-internal-service-token-secret-key-54321
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  namespace: flowforge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+        - name: api-service
+          image: flowforge/api-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: flowforge-config
+            - secretRef:
+                name: flowforge-secrets
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1024Mi"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+  namespace: flowforge
+spec:
+  ports:
+    - port: 8080
+      targetPort: 8080
+  selector:
+    app: api-service
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-service
+  namespace: flowforge
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: worker-service
+  template:
+    metadata:
+      labels:
+        app: worker-service
+    spec:
+      containers:
+        - name: worker-service
+          image: flowforge/worker-service:v1.0.0
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: flowforge-config
+            - secretRef:
+                name: flowforge-secrets
+          ports:
+            - containerPort: 8081
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1024Mi"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: worker-service-hpa
+  namespace: flowforge
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: worker-service
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
