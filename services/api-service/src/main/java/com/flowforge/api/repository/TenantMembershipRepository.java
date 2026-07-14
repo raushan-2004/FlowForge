@@ -17,7 +17,7 @@ import com.flowforge.api.model.TenantRole;
 public interface TenantMembershipRepository extends JpaRepository<TenantMembership, Long> {
     Optional<TenantMembership> findByTenantAndUser(Tenant tenant, User user);
 
-    @Query("SELECT m FROM TenantMembership m WHERE m.tenant.publicId = :tenantPublicId AND m.user.publicId = :userPublicId")
+    @Query("SELECT m FROM TenantMembership m JOIN FETCH m.tenant WHERE m.tenant.publicId = :tenantPublicId AND m.user.publicId = :userPublicId")
     Optional<TenantMembership> findByTenantPublicIdAndUserPublicId(
             @Param("tenantPublicId") UUID tenantPublicId, 
             @Param("userPublicId") UUID userPublicId

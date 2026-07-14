@@ -126,10 +126,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [permissions]
   );
 
-  if (!mounted) {
-    return <>{children}</>;
-  }
-
   return (
     <AuthContext.Provider
       value={{
@@ -137,8 +133,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         currentTenant,
         permissions,
-        isAuthenticated: !!token,
-        isLoading,
+        isAuthenticated: !!token && mounted,
+        isLoading: isLoading || !mounted,
         login,
         logout,
         switchTenant,
