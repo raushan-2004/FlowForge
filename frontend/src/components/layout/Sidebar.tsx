@@ -14,6 +14,8 @@ import {
   BarChart3,
   ChevronLeft,
   Menu,
+  Cpu,
+  Key,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { usePreferences } from "@/providers/UserPreferencesProvider";
@@ -22,6 +24,8 @@ import { useAuth } from "@/providers/AuthProvider";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/projects", label: "Projects", icon: FolderKanban, permission: "VIEW_PROJECTS" },
+  { href: "/jobs", label: "Jobs", icon: Cpu, permission: "VIEW_PROJECTS" },
+  { href: "/apikeys", label: "API Keys", icon: Key, permission: "VIEW_PROJECTS" },
   { href: "/workflows", label: "Workflows", icon: GitBranch, permission: "VIEW_PROJECTS" },
   { href: "/executions", label: "Executions", icon: Activity, permission: "VIEW_PROJECTS" },
   { href: "/workers", label: "Workers", icon: Users, permission: "MANAGE_USERS" },
