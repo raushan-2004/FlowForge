@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Allow: /docs
+Disallow: /dashboard
+Disallow: /projects
+Disallow: /jobs
+Disallow: /workflows
+Disallow: /executions
+Disallow: /workers
+Disallow: /analytics
+Disallow: /settings
+Disallow: /apikeys
+Disallow: /api/
+
+Sitemap: https://flowforge.dev/sitemap.xml

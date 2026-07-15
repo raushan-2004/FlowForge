@@ -1,0 +1,20 @@
+{
+  "name": "FlowForge",
+  "short_name": "FlowForge",
+  "description": "Distributed Job Orchestration & Workflow Engine",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#7c3aed",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["productivity", "developer-tools", "utilities"],
+  "lang": "en-US",
+  "dir": "ltr"
+}

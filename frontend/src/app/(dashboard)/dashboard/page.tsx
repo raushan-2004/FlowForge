@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { OnboardingBanner } from "@/components/onboarding/OnboardingBanner";
 import { useQuery } from "@tanstack/react-query";
 import { MetricsService, ChartDataPoint } from "@/services/metrics";
 import { HealthService } from "@/services/health";
@@ -159,6 +160,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <OnboardingBanner />
       {/* Console Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
