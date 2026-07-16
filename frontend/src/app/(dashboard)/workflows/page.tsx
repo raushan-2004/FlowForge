@@ -577,8 +577,10 @@ export default function WorkflowBuilderPage() {
             {isMiniMapOpen && (
               <MiniMap
                 position="bottom-right"
-                className="bg-slate-900/90 border border-slate-800 rounded-lg shadow-lg"
-                maskColor="rgba(2, 6, 23, 0.7)"
+                className="!bg-slate-900 border border-slate-800 rounded-lg shadow-lg overflow-hidden"
+                maskColor="rgba(2, 6, 23, 0.75)"
+                nodeColor="#334155"
+                style={{ backgroundColor: "#0f172a" }}
               />
             )}
 

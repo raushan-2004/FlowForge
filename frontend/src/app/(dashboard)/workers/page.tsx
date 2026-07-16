@@ -381,7 +381,8 @@ export default function WorkersPage() {
 
         {/* Right pane: Live execution events feed */}
         <div className="w-[420px] shrink-0 flex flex-col min-h-0 bg-slate-950 border border-slate-900 rounded-lg p-4">
-          <div className="flex justify-between items-center mb-3">
+          {/* Header row: title + severity */}
+          <div className="flex items-center justify-between mb-2">
             <h2 className="text-sm font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
               <Terminal className="h-4 w-4 text-purple-400" />
               Live Activity Stream
@@ -389,7 +390,7 @@ export default function WorkersPage() {
             <select
               value={feedSeverity}
               onChange={(e) => setFeedSeverity(e.target.value)}
-              className="bg-slate-900 border border-slate-800 rounded-sm text-[10px] text-slate-350 font-semibold px-2 py-1 cursor-pointer"
+              className="bg-slate-900 border border-slate-800 rounded text-[10px] text-slate-300 font-semibold px-2 py-1 cursor-pointer focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
               <option value="">All severities</option>
               <option value="INFO">INFO</option>
@@ -398,14 +399,15 @@ export default function WorkersPage() {
             </select>
           </div>
 
+          {/* Search row */}
           <div className="relative mb-3">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500" />
+            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Filter live event entries..."
               value={feedSearch}
               onChange={(e) => setFeedSearch(e.target.value)}
-              className="h-8 w-full rounded-md border border-slate-800 bg-slate-950 pl-8 pr-3 text-xs text-slate-300 focus:ring-1 focus:ring-purple-500"
+              className="h-8 w-full rounded-md border border-slate-800 bg-slate-900/60 pl-8 pr-3 text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-purple-500"
             />
           </div>
 

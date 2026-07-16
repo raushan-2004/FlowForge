@@ -115,7 +115,7 @@ function Pill({ children }: { children: React.ReactNode }) {
 
 function HeroSection() {
   return (
-    <section className="relative pt-32 pb-24 flex flex-col items-center text-center px-6" aria-labelledby="hero-heading">
+    <section className="relative pt-32 pb-12 flex flex-col items-center text-center px-6" aria-labelledby="hero-heading">
       <GridBackground />
       <div className="relative z-10 max-w-4xl mx-auto space-y-8">
         <Pill>
@@ -247,7 +247,7 @@ const FEATURES = [
 
 function FeaturesSection() {
   return (
-    <section id="features" className="py-24 px-6" aria-labelledby="features-heading">
+    <section id="features" className="py-16 px-6" aria-labelledby="features-heading">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
           <Pill><Star className="h-3 w-3" /> Core Capabilities</Pill>
@@ -355,7 +355,7 @@ function ProductPreviewSection() {
   ];
 
   return (
-    <section className="py-24 px-6" aria-labelledby="preview-heading">
+    <section className="py-16 px-6" aria-labelledby="preview-heading">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16 space-y-4">
           <Pill><Eye className="h-3 w-3" /> Product Tour</Pill>

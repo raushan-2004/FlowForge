@@ -98,7 +98,7 @@ function SelectField({ value, onChange, options, disabled }: {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
-      className="h-9 rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
+      className="h-9 w-56 rounded-md border border-slate-700 bg-slate-950 px-3 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-violet-500 disabled:opacity-50"
     >
       {options.map((o) => (
         <option key={o.value} value={o.value} className="bg-slate-950">{o.label}</option>
